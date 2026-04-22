@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: book-catalog-service
+  labels:
+    app: book-catalog-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: book-catalog-service
+  template:
+    metadata:
+      labels:
+        app: book-catalog-service
+    spec:
+      containers:
+        - name: book-catalog-service
+          image: book-catalog-service
+          imagePullPolicy: Always
+          lifecycle:
+            preStop:
+              exec:
+                command: [ 'sh', '-c', 'sleep 5' ]
+          ports:
+            - containerPort: 9011
+          env:
+            - name: SPRING_PROFILE_ACTIVE
+              value: testdata
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://polar-postgres:5432/polardb_catalog'
+            - name: JAVA_OPTS
+              value: "--enable-preview"
+

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/book-catalog-service.main.iml" filepath="$PROJECT_DIR$/.idea/modules/book-catalog-service.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/book-dispatch-service.main.iml" filepath="$PROJECT_DIR$/.idea/modules/book-dispatch-service.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/book-edge-service.main.iml" filepath="$PROJECT_DIR$/.idea/modules/book-edge-service.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/book-order-service.main.iml" filepath="$PROJECT_DIR$/.idea/modules/book-order-service.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/cloud-native-spring-boot4.iml" filepath="$PROJECT_DIR$/.idea/cloud-native-spring-boot4.iml" />
+    </modules>
+  </component>
+</project>

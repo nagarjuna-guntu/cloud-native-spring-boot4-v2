@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: book-catalog-service
+  labels:
+    app: book-catalog-service
+spec:
+  type: ClusterIP
+  selector:
+    app: book-catalog-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9011

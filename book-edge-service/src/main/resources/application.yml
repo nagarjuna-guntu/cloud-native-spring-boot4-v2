@@ -1,0 +1,189 @@
+server:
+  port: 9010
+
+spring:
+  application:
+    name: book-edge-service
+
+spring.jackson:
+  deserialization:
+    fail-on-null-for-primitives: false
+
+spring.webflux:
+  problemdetails:
+    enabled: true
+
+spring.security.oauth2.client:
+  registration:
+    keycloak:
+      client-id: book-edge-service
+      client-secret: polar-keycloak-secret
+      scope: openid, roles
+  provider:
+    keycloak:
+      issuer-uri: http://localhost:8180/realms/PolarBookshop
+
+spring.cloud.gateway.server.webflux:
+  httpclient:
+    connect-timeout: 2000
+    response-timeout: 5s
+  default-filters:
+    - SaveSession
+    - TokenRelay
+    - name: RequestRateLimiter
+      args:
+        key-resolver: "#{@userKeyResolver}"
+        redis-rate-limiter.replenishRate: 10
+        redis-rate-limiter.burstCapacity: 20
+        redis-rate-limiter.requestedTokens: 1
+    - name: Retry
+      args:
+        retries: 3
+        methods: GET
+        exceptions: java.io.IOException, java.util.concurrent.TimeoutException
+        statuses:
+          - SERVICE_UNAVAILABLE
+          - GATEWAY_TIMEOUT
+          - BAD_GATEWAY
+          - REQUEST_TIMEOUT
+          - INTERNAL_SERVER_ERROR
+        backoff:
+          firstBackoff: 30ms
+          maxBackoff: 100ms
+          factor: 2
+          basedOnPreviousValue: false
+
+  routes:
+    - id: catalog-route
+      uri: ${BOOK_CATALOG_SERVICE_URL:http://localhost:9011}/books
+      predicates:
+        - Path=/books/{*ISBN}
+      filters:
+        - name: CircuitBreaker
+          args:
+            name: catalogCircuitBreaker
+            fallbackUri: forward:/catalog-fallback/{ISBN}
+    - id: order-route
+      uri: ${BOOK_ORDER_SERVICE_URL:http://localhost:9012}/orders
+      predicates:
+        - Path=/orders/**
+      filters:
+        - name: CircuitBreaker
+          args:
+            name: orderCircuitBreaker
+            statusCodes:
+              - 500
+              - "NOT_FOUND"
+
+services:
+  order:
+    base-url: ${BOOK_ORDER_SERVICE_URL:http://127.0.0.1:9012}
+  catalog:
+    base-url: ${BOOK_CATALOG_SERVICE_URL:http://127.0.0.1:9011}
+
+#spring.http.clients.connect-timeout: 2s # Global setting
+spring.http.serviceclient:
+  order-service:
+    ##base-url: http://127.0.0.1:9012
+    connect-timeout: 2s
+    read-timeout: 3s
+  catalog-service:
+    ##base-url: http://127.0.0.1:9011
+    connect-timeout: 1s
+    read-timeout: 2s
+
+spring.data:
+  redis:
+    host: localhost
+    port: 6379
+    connect-timeout: 2s
+    timeout: 1s
+
+spring.session:
+  data:
+    redis:
+      namespace: polar:edge
+  timeout: 15m
+
+resilience4j.circuitbreaker:
+  configs:
+    default:
+      registerHealthIndicator: true
+      slidingWindowSize: 10
+      minimumNumberOfCalls: 3
+      failureRateThreshold: 50
+      permittedNumberOfCallsInHalfOpenState: 3
+      waitDurationInOpenState: 1500
+  instances:
+    orderService:
+      base-config: default
+      sliding-window-size: 5
+    bookService:
+      base-config: default
+      sliding-window-size: 5
+resilience4j.timelimiter:
+  configs:
+    default:
+      timeoutDuration: 5s
+      cancel-running-future: true
+  instances:
+    orderService:
+      base-config: default
+    bookService:
+      base-config: default
+resilience4j.retry:
+  configs:
+    default:
+      max-attempts: 3
+      wait-duration: 500ms
+      exponential-backoff-multiplier: 2
+      exponential-max-wait-duration: 2s
+      retryExceptions:
+        - java.util.concurrent.TimeoutException
+        - org.springframework.web.reactive.function.client.WebClientResponseException.GatewayTimeout
+        - org.springframework.web.reactive.function.client.WebClientResponseException.ServiceUnavailable
+        - org.springframework.web.reactive.function.client.WebClientResponseException.BadGateway
+        - org.springframework.web.reactive.function.client.WebClientResponseException.InternalServerError
+  instances:
+    orderService:
+      base-config: default
+    bookService:
+      base-config: default
+
+logging:
+  level:
+    io.github.resilience4j: DEBUG
+    org.springframework.cloud.circuitbreaker: DEBUG
+
+management.endpoints:
+  web:
+    exposure:
+      include: health
+management.endpoint:
+  health:
+    show-details: always
+    show-components: always
+    probes:
+      enabled: true
+    group:
+      readiness:
+        include: readinessState, redis
+
+#OBSERVABILITY
+spring.reactor.context-propagation: auto  # trace ID across the reactive thread boundaries of Netty, you must enable automatic context propagation
+management.tracing.sampling.probability: 1.0
+
+management.opentelemetry:
+  logging:
+    export:
+      otlp:
+        endpoint: http://localhost:4318/v1/logs
+  tracing:
+    export:
+      otlp:
+        endpoint: http://localhost:4318/v1/traces
+
+management.otlp:
+    metrics:
+      export:
+        url: http://localhost:4318/v1/metrics

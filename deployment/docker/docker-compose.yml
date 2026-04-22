@@ -1,0 +1,114 @@
+services:
+  book-edge-service:
+    image: 'book-edge-service'
+    container_name: 'book-edge-service'
+    ports:
+      - '9010:9010'
+    depends_on:
+      - 'polar-redis'
+      - 'grafana-lgtm'
+    environment:
+      - 'BOOK_CATALOG_SERVICE_URL=http://book-catalog-service:9011'
+      - 'BOOK_ORDER_SERVICE_URL=http://book-order-service:9012'
+      - 'SPRING_DATA_REDIS_HOST=polar-redis'
+      - 'JAVA_TOOL_OPTIONS: --enable-preview'
+      - 'MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT=http://grafana-lgtm:4318/v1/logs'
+      - 'MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT=http://grafana-lgtm:4318/v1/traces'
+      - 'MANAGEMENT_OTLP_METRICS_EXPORT_URL=http://grafana-lgtm:4318/v1/metrics'
+  book-catalog-service:
+    image: 'book-catalog-service'
+    container_name: 'book-catalog-service'
+    ports:
+      - '9011:9011'
+    depends_on:
+      - 'polar-postgres'
+      - 'polar-redis'
+      - 'grafana-lgtm'
+      - 'polar-rabbitmq'
+    environment:
+      - 'SPRING_DATASOURCE_URL=jdbc:postgresql://polar-postgres:5432/polardb_catalog'
+      - 'SPRING_DATA_REDIS_HOST=polar-redis'
+      - 'SPRING_RABBITMQ_HOST=polar-rabbitmq'
+      - 'SPRING_PROFILES_ACTIVE=testdata'
+      - 'JAVA_TOOL_OPTIONS: --enable-preview'
+      - 'MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT=http://grafana-lgtm:4318/v1/logs'
+      - 'MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT=http://grafana-lgtm:4318/v1/traces'
+      - 'MANAGEMENT_OTLP_METRICS_EXPORT_URL=http://grafana-lgtm:4318/v1/metrics'
+
+  book-order-service:
+    image: 'book-order-service'
+    container_name: 'book-order-service'
+    ports:
+      - '9012:9012'
+    depends_on:
+      - 'polar-postgres'
+      - 'polar-rabbitmq'
+    environment:
+      - 'SPRING_DATASOURCE_URL=jdbc:postgresql://polar-postgres:5432/polardb_catalog'
+      - 'BOOK_CATALOG_SERVICE_URI=http://book-catalog-service:9011'
+      - 'JAVA_TOOL_OPTIONS: --enable-preview'
+      - 'SPRING_RABBITMQ_HOST=polar-rabbitmq'
+      - 'MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT=http://grafana-lgtm:4318/v1/logs'
+      - 'MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT=http://grafana-lgtm:4318/v1/traces'
+      - 'MANAGEMENT_OTLP_METRICS_EXPORT_URL=http://grafana-lgtm:4318/v1/metrics'
+
+  book-dispatch-service:
+    image: 'book-dispatch-service'
+    container_name: 'book-dispatch-service'
+    ports:
+      - '9013:9013'
+    depends_on:
+      - 'polar-rabbitmq'
+    environment:
+      - 'SPRING_RABBITMQ_HOST=polar-rabbitmq'
+      - 'JAVA_TOOL_OPTIONS: --enable-preview'
+      - 'MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT=http://grafana-lgtm:4318/v1/logs'
+      - 'MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT=http://grafana-lgtm:4318/v1/traces'
+      - 'MANAGEMENT_OTLP_METRICS_EXPORT_URL=http://grafana-lgtm:4318/v1/metrics'
+
+  polar-postgres:
+    image: 'postgres:15.1'
+    container_name: 'polar-postgres'
+    environment:
+      - 'POSTGRES_PASSWORD=secret'
+      - 'POSTGRES_USER=user'
+    volumes:
+      - ./postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - '5432:5432'
+
+  polar-redis:
+    image: 'redis:8.4.0'
+    container_name: 'polar-redis'
+    ports:
+      - '6379:6379'
+
+  polar-rabbitmq:
+    image: 'rabbitmq:4.1.1-management'
+    container_name: 'polar-rabbitmq'
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    environment:
+      - 'RABBITMQ_DEFAULT_USER=user'
+      - 'RABBITMQ_DEFAULT_PASS=password'
+
+  grafana-lgtm:
+    image: 'grafana/otel-lgtm:latest'
+    container_name: 'grafana-lgtm'
+    ports:
+      - '3000:3000'
+      - '4317:4317'
+      - '4318:4318'
+
+  polar-keycloak:
+    image: 'quay.io/keycloak/keycloak:26.5.0'
+    container_name: 'polar-keycloak'
+    command: start-dev --import-realm
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+    environment:
+      - 'KEYCLOAK_ADMIN=user'
+      - 'KEYCLOAK_ADMIN_PASSWORD=password'
+    ports:
+      - '8180:8080'
