@@ -14,7 +14,7 @@ import java.util.Map;
 @RestController
 public class UserController {
 
-    @GetMapping("user")
+    @GetMapping("/user")
     public Mono<User> getUser(@AuthenticationPrincipal OidcUser oidcUser) {
 
         IO.println("roles: " + oidcUser.getClaimAsStringList("roles"));

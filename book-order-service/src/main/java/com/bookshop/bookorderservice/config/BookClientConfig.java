@@ -1,8 +1,8 @@
 package com.bookshop.bookorderservice.config;
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
 import org.springframework.boot.http.client.HttpClientSettings;
+import org.springframework.boot.restclient.RestClientCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.retry.RetryPolicy;
@@ -19,21 +19,30 @@ import java.time.Duration;
 public class BookClientConfig {
 
     @Bean
-    public RestClient restClient(RestClient.Builder restClientBuilder ) {
-        HttpClientSettings settings = HttpClientSettings.defaults()
-                .withConnectTimeout(Duration.ofSeconds(2))
-                .withReadTimeout(Duration.ofSeconds(3));
-        return restClientBuilder
-                .requestFactory(ClientHttpRequestFactoryBuilder.detect().build(settings))
-                .requestInterceptor((request, body, execution) -> {
-                    // Get the JWT from the incoming request context
-                    var authentication = SecurityContextHolder.getContext().getAuthentication();
-                    if (authentication instanceof JwtAuthenticationToken jwt) {
-                        request.getHeaders().setBearerAuth(jwt.getToken().getTokenValue());
-                    }
-                    return execution.execute(request, body);
-                })
+    public RestClient catalogRestClient(RestClient.Builder builder, ServiceClientProperties props) {
+        return builder
+                .baseUrl(props.catalog().baseUrl())
                 .build();
+    }
+
+    @Bean
+    public RestClientCustomizer  restClientCustomizer() {
+        return restClientBuilder -> {
+            HttpClientSettings settings = HttpClientSettings.defaults()
+                    .withConnectTimeout(Duration.ofSeconds(2))
+                    .withReadTimeout(Duration.ofSeconds(3));
+            restClientBuilder
+                    .requestFactory(ClientHttpRequestFactoryBuilder.detect().build(settings))
+                    .requestInterceptor((request, body, execution) -> {
+                        // Get the JWT from the incoming request context
+                        var authentication = SecurityContextHolder.getContext().getAuthentication();
+                        if (authentication instanceof JwtAuthenticationToken jwt) {
+                            request.getHeaders().setBearerAuth(jwt.getToken().getTokenValue());
+                        }
+                        return execution.execute(request, body);
+                    });
+        };
+
     }
 
     @Bean
@@ -49,7 +58,6 @@ public class BookClientConfig {
                 .maxDelay(Duration.ofMillis(500))
                 .build();
         return new RetryTemplate(retryPolicy);
-
 
     }
 }

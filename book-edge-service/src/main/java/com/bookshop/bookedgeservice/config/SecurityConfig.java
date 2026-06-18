@@ -18,6 +18,7 @@ import org.springframework.security.web.server.authentication.logout.ServerLogou
 public class SecurityConfig {
 
 
+
     private final ReactiveClientRegistrationRepository clientRegistrationRepository;
 
     public SecurityConfig(ReactiveClientRegistrationRepository clientRegistrationRepository) {

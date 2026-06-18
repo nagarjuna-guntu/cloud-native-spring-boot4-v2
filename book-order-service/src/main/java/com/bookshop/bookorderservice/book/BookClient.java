@@ -1,7 +1,7 @@
 package com.bookshop.bookorderservice.book;
 
-import com.bookshop.bookorderservice.config.ServiceClientProperties;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.retry.RetryException;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.stereotype.Component;
@@ -12,22 +12,22 @@ import org.springframework.web.client.RestClient;
 @Component
 @Slf4j
 public class BookClient {
-    private final ServiceClientProperties serviceClientProperties;
-    private final RetryTemplate retryTemplate;
-    private final RestClient restClient;
 
-    public BookClient(ServiceClientProperties serviceClientProperties, RetryTemplate retryTemplate, RestClient.Builder restClientBuilder) {
-        this.serviceClientProperties = serviceClientProperties;
+    private final RestClient restClient;
+    private final RetryTemplate retryTemplate;
+
+    public BookClient(@Qualifier("catalogRestClient") RestClient restClient, RetryTemplate retryTemplate) {
+
+        this.restClient = restClient;
         this.retryTemplate = retryTemplate;
-        this.restClient = restClientBuilder.baseUrl(serviceClientProperties.catalogServiceUrl())
-                .build();
+
     }
 
 
     public Book findBookByIsbn(String isbn) {
         log.info("calling findBookByIsbn with ISBN {}", isbn);
         return restClient.get()
-                .uri("/books/{ISBN}", isbn)
+                .uri( "/books/{ISBN}", isbn)
                 .retrieve()
                 .body(Book.class);
     }
