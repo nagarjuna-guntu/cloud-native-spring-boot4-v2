@@ -3,6 +3,7 @@
 The **Book Order System** is a containerized, cloud-native application built on a distributed microservices model. 
 It relies on a decoupled, reactive architecture driven by asynchronous events and secured through unified OAuth2/OIDC identity management.
 
+![System Architecture Diagram](/BookShop-System.png)
 ---
 
 ## 🏗️ System Components
