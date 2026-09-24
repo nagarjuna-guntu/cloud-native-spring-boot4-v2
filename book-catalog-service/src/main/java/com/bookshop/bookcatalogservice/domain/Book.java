@@ -1,9 +1,5 @@
 package com.bookshop.bookcatalogservice.domain;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Positive;
 import lombok.Builder;
 import org.springframework.data.annotation.*;
 import org.springframework.data.relational.core.mapping.Column;
@@ -41,7 +37,7 @@ public record Book(
         int version
 ) {
 
-        public static Book of(String isbn, String title, String author, double price, String publisher) {
-                return new Book(null, isbn, title, author, price, publisher,null, null, null, null, 0 );
-        }
+    public static Book of(String isbn, String title, String author, double price, String publisher) {
+        return new Book(null, isbn, title, author, price, publisher, null, null, null, null, 0);
+    }
 }

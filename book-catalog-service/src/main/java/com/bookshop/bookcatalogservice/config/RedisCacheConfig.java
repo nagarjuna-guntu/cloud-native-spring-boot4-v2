@@ -7,7 +7,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.serializer.*;
+import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 import tools.jackson.databind.JavaType;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -19,7 +22,9 @@ import java.util.List;
 public class RedisCacheConfig {
 
     @Bean
-    public RedisCacheManager cacheManager(RedisConnectionFactory redisConnectionFactory, RedisSerializer<List<BookResponse>> redisBooksValueSerializer, RedisSerializer<BookResponse> redisBookByIsbnValueSerializer) {
+    public RedisCacheManager cacheManager(RedisConnectionFactory redisConnectionFactory,
+                                          RedisSerializer<List<BookResponse>> redisBooksValueSerializer,
+                                          RedisSerializer<BookResponse> redisBookByIsbnValueSerializer) {
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .disableCachingNullValues()
                 .prefixCacheNameWith("book-catalog::")

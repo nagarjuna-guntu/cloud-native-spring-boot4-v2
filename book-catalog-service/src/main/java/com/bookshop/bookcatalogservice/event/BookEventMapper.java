@@ -1,11 +1,7 @@
 package com.bookshop.bookcatalogservice.event;
 
-import com.bookshop.bookcatalogservice.domain.Book;
 import com.bookshop.bookcatalogservice.web.BookResponse;
 import org.springframework.stereotype.Component;
-
-import java.time.Instant;
-import java.util.UUID;
 
 @Component
 public class BookEventMapper {
