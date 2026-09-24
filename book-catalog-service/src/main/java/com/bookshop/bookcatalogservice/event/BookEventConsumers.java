@@ -27,7 +27,7 @@ public class BookEventConsumers {
         return event -> {
             log.info("Book created event consumed with ISBN: {}", event.isbn());
             var bookResponse = bookEventMapper.mapToBookResponse(event);
-            ifCachePresent(BOOKS_BY_ISBN, cache ->  cache.put(bookResponse.isbn(), bookResponse));
+            ifCachePresent(BOOKS_BY_ISBN, cache -> cache.put(bookResponse.isbn(), bookResponse));
             ifCachePresent(BOOKS, Cache::clear); // clear the existing list cache and rebuild when @Cacheable on getAll methods
         };
     }
@@ -37,7 +37,7 @@ public class BookEventConsumers {
         return event -> {
             log.info("Book updated event consumed with ISBN: {}", event.isbn());
             var bookResponse = bookEventMapper.mapToBookResponse(event);
-            ifCachePresent(BOOKS_BY_ISBN, cache ->  cache.put(bookResponse.isbn(), bookResponse));
+            ifCachePresent(BOOKS_BY_ISBN, cache -> cache.put(bookResponse.isbn(), bookResponse));
             ifCachePresent(BOOKS, Cache::clear);
         };
     }

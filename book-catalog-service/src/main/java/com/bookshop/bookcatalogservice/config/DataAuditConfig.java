@@ -16,18 +16,16 @@ import java.util.Optional;
 public class DataAuditConfig {
 
     @Bean
-    public AuditorAware<String> getCurrentAuditor() {
+    public AuditorAware<String> currentAuditor() {
         return () -> Optional.of(SecurityContextHolder.getContext())
                 .map(SecurityContext::getAuthentication)
                 .filter(Authentication::isAuthenticated)
                 .map(auth -> {
-                    if (auth.getPrincipal() instanceof Jwt jwt)  {
+                    if (auth.getPrincipal() instanceof Jwt jwt) {
                         return jwt.getClaimAsString("name");
                     }
                     return auth.getName();
                 })
                 .or(() -> Optional.of("Anonymous"));
-
-
     }
 }
